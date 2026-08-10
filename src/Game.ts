@@ -1,0 +1,107 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+import { SceneManager } from "./core/SceneManager";
+import { CameraManager } from "./core/CameraManager";
+import { RendererManager } from "./core/RendererManager";
+
+import { Player } from "./objects/Player";
+
+// import { AnimationManager } from "../animations/AnimationManager";
+import { ResizeManager } from "./core/ResizeManager";
+import { InputManager } from "./core/InputManager";
+import { UIManager } from "./ui/UIManager";
+import { LightManager } from './core/LightManager';
+import { GLTFLoaderManager } from './core/GLTFLoaderManager';
+import GUI from 'lil-gui';
+import { Ground } from './objects/Ground';
+import { Joystick } from './ui/Joystick';
+
+export class Game {
+    private sceneManager = new SceneManager();
+    private cameraManager = new CameraManager();
+    private lightManager = new LightManager();
+    private rendererManager = new RendererManager();
+    private inputManager = new InputManager();
+
+    private joystick = new Joystick(this.rendererManager.renderer.domElement);
+
+    private gui = new GUI();
+
+    private loaderManager = new GLTFLoaderManager();
+
+    private player!: Player;
+    private ground = new Ground();
+
+    private orbitControls: OrbitControls;
+
+    private clock = new THREE.Clock();
+
+    constructor() {
+        this.gui.hide();
+
+        new UIManager();
+        new ResizeManager(this.cameraManager.camera, this.rendererManager.renderer);
+
+        this.sceneManager.scene.add(this.lightManager.directionalLight, this.lightManager.ambientLight);
+
+        this.sceneManager.scene.add(this.ground.mesh);
+
+        // FLY CAMERA
+        this.orbitControls = new OrbitControls(this.cameraManager.camera, this.rendererManager.renderer.domElement);
+        this.orbitControls.enabled = false;
+
+        const cameraGui = this.gui.addFolder('camera');
+        cameraGui.add(this.cameraManager.camera.position, "x", -40, 40, 0.5);
+        cameraGui.add(this.cameraManager.camera.position, "y", -40, 40, 0.5);
+        cameraGui.add(this.cameraManager.camera.position, "z", -40, 40, 0.5);
+
+        cameraGui.add(this.cameraManager.camera.rotation, 'x', -Math.PI, Math.PI, 0.0001);
+        cameraGui.add(this.cameraManager.camera.rotation, 'y', -Math.PI, Math.PI, 0.0001);
+        cameraGui.add(this.cameraManager.camera.rotation, 'z', -Math.PI, Math.PI, 0.0001);
+
+
+        const axesHelper = new THREE.AxesHelper(5);
+        this.sceneManager.scene.add(axesHelper);
+        axesHelper.setColors('#ffffff', '#000000', '#ff0000');
+
+        this.initPlayer();
+
+        this.animate();
+    }
+
+    animate = () => {
+        requestAnimationFrame(this.animate);
+
+        // FLY CAMERA
+        if (this.orbitControls.enabled)
+            this.orbitControls.update();
+
+        const dt = this.clock.getDelta();
+
+        if (this.joystick.active) {
+            this.player.movePlayer(new THREE.Vector3(this.joystick.direction.x, 0, this.joystick.direction.y), dt, this.player.walkSpeed);
+        }
+
+        this.rendererManager.renderer.render(
+            this.sceneManager.scene,
+            this.cameraManager.camera,
+        )
+    }
+
+    private async initPlayer() {
+        this.player = new Player(this.loaderManager);
+        await this.player.load();
+
+        this.sceneManager.scene.add(this.player.group);
+
+        // this.cameraManager.camera.lookAt(this.player.group.position);
+
+        const playerGui = this.gui.addFolder('player');
+        playerGui.add(this.player.group.position, "x", -40, 40, 0.5);
+        playerGui.add(this.player.group.position, "y", -40, 40, 0.5);
+        playerGui.add(this.player.group.position, "z", -40, 40, 0.5);
+
+        playerGui.add(this.player.group.rotation, 'y', -Math.PI, Math.PI, 0.0001);
+    }
+}
