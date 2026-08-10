@@ -9,7 +9,7 @@ import { Player } from "./objects/Player";
 
 // import { AnimationManager } from "../animations/AnimationManager";
 import { ResizeManager } from "./core/ResizeManager";
-import { InputManager } from "./core/InputManager";
+// import { InputManager } from "./core/InputManager";
 import { UIManager } from "./ui/UIManager";
 import { LightManager } from './core/LightManager';
 import { GLTFLoaderManager } from './core/GLTFLoaderManager';
@@ -22,7 +22,7 @@ export class Game {
     private cameraManager = new CameraManager();
     private lightManager = new LightManager();
     private rendererManager = new RendererManager();
-    private inputManager = new InputManager();
+    // private inputManager = new InputManager();
 
     private joystick = new Joystick(this.rendererManager.renderer.domElement);
 

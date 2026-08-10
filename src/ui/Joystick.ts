@@ -16,22 +16,22 @@ export class Joystick {
     constructor(
         private element: HTMLElement,
     ) {
-        element.addEventListener(
+        this.element.addEventListener(
             'pointerdown',
             this.onPointerDown,
         );
 
-        element.addEventListener(
+        this.element.addEventListener(
             'pointermove',
             this.onPointerMove,
         );
 
-        element.addEventListener(
+        this.element.addEventListener(
             'pointerup',
             this.onPointerUp,
         );
 
-        // element.addEventListener(
+        // this.element.addEventListener(
         //     'pointercancel',
         //     this.onPointerCancel,
         // );
