@@ -23,6 +23,7 @@ export class Game {
     private lightManager = new LightManager();
     private rendererManager = new RendererManager();
     // private inputManager = new InputManager();
+    private uiManager: UIManager;
 
     private joystick = new Joystick(this.rendererManager.renderer.domElement);
 
@@ -40,7 +41,15 @@ export class Game {
     constructor() {
         this.gui.hide();
 
-        new UIManager();
+        this.uiManager = new UIManager(() => {
+            if (!this.player?.canLookAround()) {
+                return;
+            }
+
+            this.uiManager.setActionButtonState(true);
+
+            this.player?.lookAround();
+        });
         new ResizeManager(this.cameraManager.camera, this.rendererManager.renderer);
 
         this.sceneManager.scene.add(this.lightManager.directionalLight, this.lightManager.ambientLight);
@@ -83,6 +92,10 @@ export class Game {
             this.player.movePlayer(new THREE.Vector3(this.joystick.direction.x, 0, this.joystick.direction.y), dt, this.player.walkSpeed);
         }
 
+        if (this.player) {
+            this.player.update(dt);
+        }
+
         this.rendererManager.renderer.render(
             this.sceneManager.scene,
             this.cameraManager.camera,
@@ -92,6 +105,10 @@ export class Game {
     private async initPlayer() {
         this.player = new Player(this.loaderManager);
         await this.player.load();
+
+        this.player.onLookAroundFinished(() => {
+            this.uiManager.setActionButtonState(false);
+        });
 
         this.sceneManager.scene.add(this.player.group);
 

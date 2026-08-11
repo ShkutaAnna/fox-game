@@ -1,0 +1,39 @@
+.action-button {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(90vw, 250px);
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.action-button:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.action-button.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.action-button img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.action-button span {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
