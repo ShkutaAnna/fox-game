@@ -4,6 +4,8 @@ export class CameraManager {
     // public camera: THREE.PerspectiveCamera;
     public camera: THREE.OrthographicCamera;
 
+    private readonly initialZ = -25;
+
     constructor() {
         // this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
         // this.camera.position.y = 23.5;
@@ -24,8 +26,18 @@ export class CameraManager {
 
         // this.camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 50);
         this.camera.position.y = 20;
-        this.camera.position.z = -25;
+        this.camera.position.z = this.initialZ;
 
         this.camera.lookAt(0, 0, 0);
+    }
+
+    update(target: THREE.Vector3) {
+        const targetPosition = new THREE.Vector3(
+            target.x,
+            this.camera.position.y,
+            target.z + this.initialZ,
+        );
+
+        this.camera.position.lerp(targetPosition, 0.1);
     }
 }

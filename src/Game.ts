@@ -89,11 +89,15 @@ export class Game {
         const dt = this.clock.getDelta();
 
         if (this.joystick.active) {
+            this.player.startMovingAnimation();
             this.player.movePlayer(new THREE.Vector3(this.joystick.direction.x, 0, this.joystick.direction.y), dt, this.player.walkSpeed);
+        } else {
+            this.player.stopMovingAnimation();
         }
 
         if (this.player) {
             this.player.update(dt);
+            this.cameraManager.update(this.player.group.position);
         }
 
         this.rendererManager.renderer.render(

@@ -13,7 +13,9 @@ export class Player {
     private isSurveying = false;
     private surveyFinishedCallback?: () => void
 
-    public readonly walkSpeed = 4;
+    private isWalking = false;
+
+    public readonly walkSpeed = 3;
     public readonly runSpeed = 8;
 
     constructor(
@@ -28,7 +30,7 @@ export class Player {
                 foxUrl,
                 (gltf) => {
                     this.group.add(gltf.scene);
-                    this.group.scale.setScalar(0.025);
+                    this.group.scale.setScalar(0.015); // 0.025
 
                     this.mixer = new THREE.AnimationMixer(gltf.scene);
                     this.mixer.addEventListener('finished', (event) => this.handleAnimationFinished(event));
@@ -58,8 +60,12 @@ export class Player {
             this.group.position.addScaledVector(movementDirection, speed * dt);
 
             const targetAngle = Math.atan2(movementDirection.x, movementDirection.z);
-            // const rotationSpeed = 2;
-            this.group.rotation.y = THREE.MathUtils.damp(this.group.rotation.y, targetAngle, speed, dt)
+            const currentAngle = this.group.rotation.y;
+            const delta = THREE.MathUtils.euclideanModulo(
+                targetAngle - currentAngle + Math.PI,
+                Math.PI * 2
+            ) - Math.PI;
+            this.group.rotation.y = THREE.MathUtils.damp(currentAngle, currentAngle + delta, speed, dt);
         }
     }
 
@@ -82,6 +88,29 @@ export class Player {
         surveyAction.play();
     }
 
+    public startMovingAnimation() {
+        if (this.isWalking) return;
+
+        const walkAction = this.actions[FoxAnimations.Walk];
+        if (walkAction === null) return;
+
+        this.isWalking = true;
+        walkAction.reset();
+        // walkAction.setLoop(THREE.LoopOnce, 1);
+        walkAction.clampWhenFinished = true;
+        walkAction.play();
+    }
+
+    public stopMovingAnimation(): void {
+        if (!this.isWalking) return;
+
+        const walkAction = this.actions[FoxAnimations.Walk];
+        if (walkAction === null) return;
+
+        walkAction.stop();
+        this.isWalking = false;
+    }
+
     private handleAnimationFinished(
         event: {
             action: THREE.AnimationAction;
@@ -97,6 +126,16 @@ export class Player {
                 this.surveyFinishedCallback?.();
             }, 400);
         }
+
+        // if (event.action === this.actions[FoxAnimations.Walk]) {
+        //     this.actions[FoxAnimations.Walk]?.fadeOut(0.3);
+
+        //     setTimeout(() => {
+        //         this.actions[FoxAnimations.Walk]?.stop();
+        //         this.isSurveying = false;
+        //         this.surveyFinishedCallback?.();
+        //     }, 300);
+        // }
     }
 }
 
