@@ -16,6 +16,7 @@ import { GLTFLoaderManager } from './core/GLTFLoaderManager';
 import GUI from 'lil-gui';
 import { Ground } from './objects/Ground';
 import { Joystick } from './ui/Joystick';
+import { FontManager } from './core/FontManager';
 
 export class Game {
     private sceneManager = new SceneManager();
@@ -24,6 +25,7 @@ export class Game {
     private rendererManager = new RendererManager();
     // private inputManager = new InputManager();
     private uiManager: UIManager;
+    private fontManager = new FontManager();
 
     private joystick = new Joystick(this.rendererManager.renderer.domElement);
 
@@ -88,14 +90,14 @@ export class Game {
 
         const dt = this.clock.getDelta();
 
-        if (this.joystick.active) {
-            this.player.startMovingAnimation();
-            this.player.movePlayer(new THREE.Vector3(this.joystick.direction.x, 0, this.joystick.direction.y), dt, this.player.walkSpeed);
-        } else {
-            this.player.stopMovingAnimation();
-        }
-
         if (this.player) {
+            if (this.joystick.active) {
+                this.player.startMovingAnimation();
+                this.player.movePlayer(new THREE.Vector3(this.joystick.direction.x, 0, this.joystick.direction.y), dt, this.player.walkSpeed);
+            } else {
+                this.player.stopMovingAnimation();
+            }
+
             this.player.update(dt);
             this.cameraManager.update(this.player.group.position);
         }
@@ -107,7 +109,7 @@ export class Game {
     }
 
     private async initPlayer() {
-        this.player = new Player(this.loaderManager);
+        this.player = new Player(this.loaderManager, this.fontManager, this.cameraManager.camera);
         await this.player.load();
 
         this.player.onLookAroundFinished(() => {

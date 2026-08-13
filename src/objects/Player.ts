@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { foxUrl, type GLTFLoaderManager } from '../core/GLTFLoaderManager';
+import { foxFontUrl, type FontManager } from '../core/FontManager';
+import { MessageManager } from './MessageManager';
 
 export class Player {
     public group = new THREE.Group();
@@ -10,46 +12,82 @@ export class Player {
         [FoxAnimations.Run]: null,
     };
 
+    private surveyProgressionStep = 0;
     private isSurveying = false;
     private surveyFinishedCallback?: () => void
 
+    private surveyProgressionPhrases = [
+        'I think i see something...',
+        'Should probably check this out...'
+    ];
+
     private isWalking = false;
+
+    private messageManager!: MessageManager;
 
     public readonly walkSpeed = 3;
     public readonly runSpeed = 8;
 
     constructor(
         public loaderManager: GLTFLoaderManager,
-    ) {
-        
-    }
+        public fontManager: FontManager,
+        public camera: THREE.Camera,
+    ) { }
 
     async load(): Promise<void> {
-        return new Promise((resolve, reject) => {
+        const font = this.fontManager.load('foxFont', foxFontUrl);
+        const model = new Promise<THREE.Group>((resolve, reject) => {
             this.loaderManager.loader.load(
                 foxUrl,
                 (gltf) => {
-                    this.group.add(gltf.scene);
-                    this.group.scale.setScalar(0.015); // 0.025
-
+                    const fox = gltf.scene;
+                    fox.scale.setScalar(0.015);
+                    
                     this.mixer = new THREE.AnimationMixer(gltf.scene);
                     this.mixer.addEventListener('finished', (event) => this.handleAnimationFinished(event));
                     gltf.animations.forEach((animation) => {
                         if (!animation) return;
- 
+
                         this.actions[animation.name as FoxAnimations] = this.mixer.clipAction(animation);
                     });
-                    
-                    resolve();
+
+                    resolve(fox);
                 },
                 undefined,
                 reject
             );
         });
+
+        return Promise.all([font, model]).then((values) => {
+            this.group.add(values[1]);
+            this.messageManager = new MessageManager(values[0], this.group, this.camera);
+        });
     }
 
     public update(dt: number) {
         this.mixer?.update(dt);
+        this.messageManager?.update(dt);
+
+        if (this.isSurveying) {
+            const action = this.actions[FoxAnimations.Survey];
+
+            if (action) {
+                const progress = action.time / action.getClip().duration;
+
+                if (Math.round(progress * 100) === 30 && this.surveyProgressionStep === 0) {
+                    // 0. see something message; 1. i need to check; 3. put item in the scene, show it with the camera, go back to player, 3. draw path
+                    // exec step 0
+                    this.messageManager.addMessage(this.surveyProgressionPhrases[this.surveyProgressionStep]);
+                    this.surveyProgressionStep = 1;
+                }
+
+                if (Math.round(progress * 100) === 80 && this.surveyProgressionStep === 1) {
+                    // exec step 1
+                    this.messageManager.addMessage(this.surveyProgressionPhrases[this.surveyProgressionStep]);
+                    this.surveyProgressionStep = 2;
+                }
+            }
+        }
     }
 
     public movePlayer(dir: THREE.Vector3, dt: number, speed: number) {
@@ -123,6 +161,8 @@ export class Player {
             setTimeout(() => {
                 this.actions[FoxAnimations.Survey]?.stop();
                 this.isSurveying = false;
+                this.surveyProgressionStep = 0;
+                // draw path to item 
                 this.surveyFinishedCallback?.();
             }, 400);
         }
