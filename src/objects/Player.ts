@@ -32,7 +32,10 @@ export class Player {
         public loaderManager: GLTFLoaderManager,
         public fontManager: FontManager,
         public camera: THREE.Camera,
-    ) { }
+    ) {
+        // const ax = new THREE.AxesHelper();
+        // this.group.add(ax);
+    }
 
     async load(): Promise<void> {
         const font = this.fontManager.load('foxFont', foxFontUrl);

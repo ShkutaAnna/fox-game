@@ -14,9 +14,10 @@ import { UIManager } from "./ui/UIManager";
 import { LightManager } from './core/LightManager';
 import { GLTFLoaderManager } from './core/GLTFLoaderManager';
 import GUI from 'lil-gui';
-import { Ground } from './objects/Ground';
+import { Ground } from './objects/world/Ground';
 import { Joystick } from './ui/Joystick';
 import { FontManager } from './core/FontManager';
+import { getBlockedCells, getAreaCellsIndexes } from './utils/spawn';
 
 export class Game {
     private sceneManager = new SceneManager();
@@ -34,7 +35,7 @@ export class Game {
     private loaderManager = new GLTFLoaderManager();
 
     private player!: Player;
-    private ground = new Ground();
+    private ground = new Ground(this.gui, this.sceneManager.scene);
 
     private orbitControls: OrbitControls;
 
@@ -56,7 +57,7 @@ export class Game {
 
         this.sceneManager.scene.add(this.lightManager.directionalLight, this.lightManager.ambientLight);
 
-        this.sceneManager.scene.add(this.ground.mesh);
+        this.sceneManager.scene.add(this.ground.group);
 
         // FLY CAMERA
         this.orbitControls = new OrbitControls(this.cameraManager.camera, this.rendererManager.renderer.domElement);
@@ -72,9 +73,9 @@ export class Game {
         cameraGui.add(this.cameraManager.camera.rotation, 'z', -Math.PI, Math.PI, 0.0001);
 
 
-        const axesHelper = new THREE.AxesHelper(5);
-        this.sceneManager.scene.add(axesHelper);
-        axesHelper.setColors('#ffffff', '#000000', '#ff0000');
+        // const axesHelper = new THREE.AxesHelper(5);
+        // this.sceneManager.scene.add(axesHelper);
+        // axesHelper.setColors('#ffffff', '#000000', '#ff0000');
 
         this.initPlayer();
 
@@ -117,6 +118,33 @@ export class Game {
         });
 
         this.sceneManager.scene.add(this.player.group);
+
+        // TEST
+
+        const box = new THREE.Box3().setFromObject(this.player.group);
+
+        const params = {
+            cellSize: 5,
+            maxX: 20,
+            maxZ: 20,
+            minX: -20,
+            minZ: -20,
+        }
+
+        const cells = getAreaCellsIndexes(params);
+        getBlockedCells([box], params);
+
+        cells.forEach((cell) => {
+            const testMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(4.5, 4.5, 4.5),
+                new THREE.MeshBasicMaterial({ transparent: true, wireframe: true }),
+            )
+
+            testMesh.position.set(cell.centerX, 0.5, cell.centerZ);
+            this.sceneManager.scene.add(testMesh);
+        })
+
+        // END OF TEST
 
         // this.cameraManager.camera.lookAt(this.player.group.position);
 

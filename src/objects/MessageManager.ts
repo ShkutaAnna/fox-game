@@ -41,7 +41,7 @@ export class MessageManager {
 
         this.typewriterText.object.lookAt(this.camera.position);
 
-        if (this.typewriterText.currentText.localeCompare(this.messages[0]) === 0) {
+        if (this.typewriterText.currentText === this.messages[0]) {
             const finished = this.typewriterText.update(dt);
 
             if (finished) {

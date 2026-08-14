@@ -17,7 +17,10 @@ export class TypewriterText {
             new THREE.BufferGeometry(),
             material
         );
-        this.mesh.name = 'typewriterText'
+        this.mesh.name = 'typewriterText';
+
+        // const ax = new THREE.AxesHelper();
+        // this.mesh.add(ax);
     }
 
     setText(text: string) {
@@ -65,16 +68,11 @@ export class TypewriterText {
         this.mesh.geometry.dispose();
         this.mesh.geometry = geometry;
 
-
-        // FIX THIS, centers of this and parent should align
         geometry.computeBoundingBox();
 
         if (geometry.boundingBox) {
-            const width =
-                geometry.boundingBox.max.x -
-                geometry.boundingBox.min.x;
-
-            this.mesh.position.x = -width / 2;
+            const centerX = (geometry.boundingBox.min.x + geometry.boundingBox.max.x) / 2;
+            geometry.translate(-centerX, 0, 0);
         }
     }
 
